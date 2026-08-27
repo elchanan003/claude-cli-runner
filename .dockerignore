@@ -1,0 +1,8 @@
+node_modules
+test
+deploy
+examples/state.json
+*.log
+.env
+.env.*
+!.env.example

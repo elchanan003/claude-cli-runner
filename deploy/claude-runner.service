@@ -1,0 +1,67 @@
+# Bare-VM alternative to the container. Install to
+# /etc/systemd/system/claude-runner.service, then:
+#
+#   sudo systemctl daemon-reload
+#   sudo systemctl enable --now claude-runner
+#   journalctl -u claude-runner -f
+#
+# Assumes the package is checked out at /opt/claude-cli-runner, owned by a
+# dedicated `runner` user with `npm install --omit=dev` already run.
+
+[Unit]
+Description=claude-cli-runner (Claude Code CLI behind an HTTP service)
+Documentation=file:/opt/claude-cli-runner/README.md
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=runner
+Group=runner
+WorkingDirectory=/opt/claude-cli-runner
+
+# Mode 0600, owned by runner. Holds CLAUDE_CODE_OAUTH_TOKEN.
+EnvironmentFile=/etc/claude-runner/env
+
+# The CLI writes config and telemetry under HOME; it must be writable.
+Environment=HOME=/var/lib/claude-runner
+Environment=STATE_FILE=/var/lib/claude-runner/state.json
+
+ExecStart=/usr/bin/node examples/personal-server.mjs
+
+Restart=on-failure
+RestartSec=5s
+# The startup guards exit 1 on a misconfiguration. Restarting into the same bad
+# config forever just fills the journal, so give up after a few tries.
+StartLimitBurst=3
+StartLimitIntervalSec=60
+
+# StateDirectory creates and chowns /var/lib/claude-runner automatically.
+StateDirectory=claude-runner
+StateDirectoryMode=0750
+
+# Hardening. NoNewPrivileges and a private tmp are safe here; the service only
+# ever spawns the CLI binary and talks HTTPS out.
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectControlGroups=true
+RestrictSUIDSGID=true
+RestrictNamespaces=true
+LockPersonality=true
+# MemoryDenyWriteExecute is deliberately NOT set: the CLI is a JIT-compiled
+# native binary and will crash under it.
+
+# Each request forks the ~230MB binary.
+MemoryMax=2G
+TasksMax=512
+
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=claude-runner
+
+[Install]
+WantedBy=multi-user.target

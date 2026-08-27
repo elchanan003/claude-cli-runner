@@ -1,0 +1,5 @@
+node_modules
+deploy/.env
+examples/state.json
+*.log
+.DS_Store

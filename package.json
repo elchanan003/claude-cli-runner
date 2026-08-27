@@ -1,0 +1,26 @@
+{
+  "name": "claude-cli-runner",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Run the Claude Code CLI (claude -p) as a subprocess behind an HTTP service. Extracted from devops-005-gitops-guides/tutor-local. Single-operator/homelab scope by default.",
+  "main": "src/index.mjs",
+  "exports": {
+    ".": "./src/index.mjs"
+  },
+  "engines": {
+    "node": ">=22.0.0"
+  },
+  "scripts": {
+    "smoke": "node test/smoke.mjs",
+    "smoke:offline": "SKIP_LIVE=1 node test/smoke.mjs",
+    "parity": "node test/parity.mjs",
+    "start": "node examples/personal-server.mjs"
+  },
+  "dependencies": {
+    "@anthropic-ai/claude-code": "^2.1.246"
+  },
+  "allowScripts": {
+    "@anthropic-ai/claude-code": true
+  }
+}
